@@ -26,8 +26,8 @@ class Database:
         self.last_error = ""
         self.password_reset_required = False
 
-        self.max_failed_attempts = 5
-        self.lockout_minutes = 15
+        self.max_failed_attempts = 3
+        self.lockout_minutes = 5 #temps de blocage par defaut en minute
 
         self.password_min_length = 13
 
@@ -227,17 +227,24 @@ class Database:
         finally:
             cursor.close()
 
-
+    #modifie le blocage
     def updateLockout(self, username, locked_until):
         cursor = self._cursor()
         if cursor is None:
             return False
 
         try:
-            cursor.execute(
-                "UPDATE users SET locked_until = %s WHERE username = %s",
-                (locked_until, username)
-            )
+            if locked_until is None:
+                # déblocage manuel par l'admin : on remet les tentatives ET le nombre de blocages à zéro
+                cursor.execute(
+                    "UPDATE users SET locked_until = %s, failed_attempts = 0, lockout_count = 0 WHERE username = %s",
+                    (locked_until, username)
+                )
+            else:
+                cursor.execute(
+                    "UPDATE users SET locked_until = %s WHERE username = %s",
+                    (locked_until, username)
+                )
             affected = cursor.rowcount
             self._connection().commit()
             return affected > 0
@@ -278,7 +285,7 @@ class Database:
 
         cursor.execute(
             """
-            SELECT id, username, hashpassword, role, is_temporary, is_active, failed_attempts, locked_until, last_login
+            SELECT id, username, hashpassword, role, is_temporary, is_active, failed_attempts, locked_until, last_login, lockout_count
             FROM users
             WHERE username = %s
             """,
@@ -293,6 +300,8 @@ class Database:
             is_active = bool(record[5])
             failed_attempts = record[6] if record[6] is not None else 0
             locked_until = record[7]
+            # nombre de blocages déjà subis par CET utilisateur (stocké en base, colonne 10 du SELECT)
+            lockout_count = record[9] if record[9] is not None else 0
 
             if not is_active:
                 self.last_error = "COMPTE INACTIVE"
@@ -302,6 +311,10 @@ class Database:
             if locked_until and locked_until > now:
                 self.last_error = "COMPTE BLOQUE"
                 return False
+
+            # Blocage expiré : on redonne un nouveau cycle de tentatives
+            if locked_until and locked_until <= now:
+                failed_attempts = 0
 
             if bcrypt.checkpw(password.encode('utf-8'), hash_stocke.encode('utf-8')):
                 if is_temporary:
@@ -318,7 +331,8 @@ class Database:
                 self.last_error = ""
                 return True
 
-            self._registerFailedAttempt(username, failed_attempts)
+            # on transmet aussi lockout_count pour calculer la durée du prochain blocage
+            self._registerFailedAttempt(username, failed_attempts, lockout_count)
             self.last_error = "Identifiants incorrects"
         else:
             self.last_error = "Identifiants incorrects"
@@ -347,7 +361,7 @@ class Database:
         return True
 
 
-    def _registerFailedAttempt(self, username, failed_attempts):
+    def _registerFailedAttempt(self, username, failed_attempts, lockout_count):
         cursor = self._cursor()
         if cursor is None:
             return
@@ -357,16 +371,20 @@ class Database:
             locked_until = None
 
             if next_attempts >= self.max_failed_attempts:
-                locked_until = datetime.now() + timedelta(minutes=self.lockout_minutes)
+                # nouveau blocage : +1 au compteur, la durée augmente à chaque blocage (5, 10, 15 min...)
+                lockout_count += 1
+                locked_until = datetime.now() + timedelta(minutes=self.lockout_minutes * lockout_count)
 
+            # on sauvegarde aussi lockout_count en base pour le retrouver à la prochaine connexion
             cursor.execute(
                 """
                 UPDATE users
                 SET failed_attempts = %s,
-                    locked_until = %s
+                    locked_until = %s,
+                    lockout_count = %s
                 WHERE username = %s
                 """,
-                (next_attempts, locked_until, username)
+                (next_attempts, locked_until, lockout_count, username)
             )
             self._connection().commit()
 
@@ -383,8 +401,9 @@ class Database:
 
         try:
             cursor.execute(
-                "UPDATE users SET failed_attempts = %s, locked_until = %s WHERE username = %s",
-                (0, None, username)
+                # connexion réussie : on remet tout à zéro, y compris le nombre de blocages
+                "UPDATE users SET failed_attempts = %s, locked_until = %s, lockout_count = %s WHERE username = %s",
+                (0, None, 0, username)
             )
             self._connection().commit()
         except Error:
