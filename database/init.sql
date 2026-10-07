@@ -15,11 +15,15 @@ CREATE TABLE public.users (
 
 Create table userActions
 (
-    id SERIAL PRIMARY KEY,
-    user_id INT REFERENCES public.users(id),
-    action VARCHAR(100) NOT NULL,
-    details Varchar(255),
-    timestamp TIMESTAMP WITHOUT TIME ZONE
+    id_modification SERIAL PRIMARY KEY,
+    ip_1 VARCHAR(15) NOT NULL,
+    ip_2 VARCHAR(15) ,
+    masque_1 VARCHAR(15) NOT NULL,
+    masque_2 VARCHAR(15) ,
+    number_subnet integer,
+    number_ip integer ,
+    user_id integer REFERENCES public.users(id),
+    id_function INT Check (id_function IN (0, 1)) --1 ou 0 
 );
 
 INSERT INTO public.users (username, hashpassword, role, is_temporary, is_active, locked_until, lockout_count) VALUES 
