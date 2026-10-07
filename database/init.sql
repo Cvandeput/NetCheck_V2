@@ -13,7 +13,7 @@ CREATE TABLE public.users (
     lockout_count INTEGER DEFAULT 0 NOT NULL --ajoute du nombre de blocage
 );
 
-Create table userActions
+Create table public.userActions
 (
     id_modification SERIAL PRIMARY KEY,
     ip_1 VARCHAR(15) NOT NULL,
