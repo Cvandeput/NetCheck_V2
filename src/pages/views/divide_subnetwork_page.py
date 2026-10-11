@@ -1,6 +1,8 @@
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget
 
+from ...services.logic import isIp, parseMask, isSubnetMask
+
 class DivideSubnetworkPage(QWidget):
     def __init__(self):
             super().__init__()
@@ -96,5 +98,35 @@ class DivideSubnetworkPage(QWidget):
             layout.addWidget(card)
             
     def run_check(self):
+        
+        # --- Execution du calcul de sous-reseau ---
+        ip = self.ip_input.text().strip()
+        mask = self.mask_input.text().strip()
+        normalized_mask = parseMask(mask)
+        
+        number_ip = self.number_ip_input.text().strip()
+        number_subnet = self.number_subnet_input.text().strip()
+        
+        self.empty_state.setVisible(False)
+        self.result_card.setVisible(True)
+        
+        # --- affichage des erreurs ---
+        if not isIp(ip):
+            self.result.setText("Adresse IP invalide")
+            self.result.setStyleSheet("color: #ef4444;")
+            self.status_badge.setText("ERREUR")
+            self.status_badge.setObjectName("badgeInvalid")
+            self.status_badge.style().unpolish(self.status_badge)
+            self.status_badge.style().polish(self.status_badge)
+            return
+        
+        if not normalized_mask or not isSubnetMask(normalized_mask):
+            self.result.setText("Masque invalide")
+            self.result.setStyleSheet("color: #ef4444;")
+            self.status_badge.setText("ERREUR")
+            self.status_badge.setObjectName("badgeInvalid")
+            self.status_badge.style().unpolish(self.status_badge)
+            self.status_badge.style().polish(self.status_badge)
+            return
+        
         # --- inserer la logique pour les calculs ici ---
-        pass

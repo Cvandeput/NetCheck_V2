@@ -9,8 +9,7 @@ class ClassMask(Enum):
     CLASS_E = "N/A_E"
     ERROR = "error"
 
-
-
+# --- verification si ip correcte ---
 def isIp(ip: str) -> bool:
     if type(ip) is not str:
         return False
@@ -29,6 +28,7 @@ def isIp(ip: str) -> bool:
 
     return True
 
+# --- Analyse masque ---
 def parseMask(mask: str) -> str | None:
     if type(mask) is not str:
         return None
