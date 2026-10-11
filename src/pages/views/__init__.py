@@ -5,3 +5,4 @@ from .get_subnet_page import GetSubnetPage
 from .is_ip_page import IsIpPage
 from .same_network_page import SameNetworkPage
 from .user_profile_page import UserProfilePage
+from .divide_subnetwork_page import DivideSubnetworkPage

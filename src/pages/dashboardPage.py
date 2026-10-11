@@ -8,15 +8,14 @@ from ..services.database import Database
 
 from .views import (
     CidrTablePage,
+    UserProfilePage,
     GetIpClassMaskPage,
     GetIpClassPage,
     GetSubnetPage,
     IsIpPage,
     SameNetworkPage,
-    UserProfilePage
+    DivideSubnetworkPage # --- ajout page SR ---
 )
-
-
 
 class DashboardWindow(QWidget):
     logout_requested = Signal()
@@ -96,6 +95,10 @@ class DashboardWindow(QWidget):
             ("Masque de classe", "Retourne le masque par défaut selon la classe IP", QIcon(os.path.join(icons_dir, "mask.svg")), GetIpClassMaskPage()),
             ("Réseau classful", "Calcule l'adresse réseau avec une IP et un masque classful", QIcon(os.path.join(icons_dir, "subnet.svg")), GetSubnetPage()),
             ("Même réseau", "Vérifie si deux IP sont dans le même réseau", QIcon(os.path.join(icons_dir, "subnet.svg")), SameNetworkPage()),
+            
+            #ajout page nbSR
+
+            ("Nombre Sous réseau", "Configuration sous réseau et IP", QIcon(os.path.join(icons_dir, "subnet.svg")), DivideSubnetworkPage()),
         ]
 
         self.button_group = QButtonGroup(self)
