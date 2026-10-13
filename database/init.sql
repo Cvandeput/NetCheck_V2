@@ -26,6 +26,10 @@ Create table public.userActions
     id_function INT Check (id_function IN (0, 1)) --1 ou 0 
 );
 
+CREATE TABLE adminResetMdp (
+    user_id INTEGER PRIMARY KEY REFERENCES users(id)
+);
+
 INSERT INTO public.users (username, hashpassword, role, is_temporary, is_active, locked_until, lockout_count) VALUES 
     ('User1', '$2b$13$bHlfV9VzzlDnd67MQoJtFOnjus0tPTc24YLoZ8uCYRjmQuZLbjiCi', 'admin',  false,  true, NULL, 0),
     ('User2', '$2b$13$bHlfV9VzzlDnd67MQoJtFOnjus0tPTc24YLoZ8uCYRjmQuZLbjiCi', 'membre', false,  true, NULL, 0),

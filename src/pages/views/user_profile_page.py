@@ -16,6 +16,8 @@ class UserProfilePage(QWidget):
         self.db = Database()
         username = user_info["username"] if user_info else "Utilisateur"
         role = user_info["role"] if user_info else "RÔLE INCONNU"
+        idUtilisateur = user_info["id"] if user_info else None
+        self.current_id = idUtilisateur
         self.current_username = username
         self.is_admin = str(role).lower() == "admin"
         self.last_login = user_info.get("last_login") if user_info else self.db.getLastLogin(username)
@@ -451,10 +453,24 @@ class UserProfilePage(QWidget):
 
     def reset_all_passwords(self):
         cursor = self.db._cursor()
-        cursor.execute("UPDATE users SET is_temporary = TRUE;")
-        self.db._connection().commit()
-        self.set_edit_message("Tous les mots de passe ont été réinitialisés.")
-        self.refresh_users()
+        
+        cursor.execute("SELECT user_id FROM adminResetMdp WHERE user_id = %s;", (self.current_id,))
+        if not cursor.fetchone():
+            cursor.execute("INSERT INTO adminResetMdp (user_id) VALUES (%s);", (self.current_id,))
+            self.db._connection().commit()
+
+        cursor.execute("SELECT COUNT(*) FROM adminResetMdp;")
+        nb_clics = cursor.fetchone()[0]
+
+        if nb_clics >= 2:
+            cursor.execute("UPDATE users SET is_temporary = TRUE;")
+            cursor.execute("DELETE FROM adminResetMdp;")
+            self.db._connection().commit()
+            self.set_edit_message("Double validation : tous les mots de passe ont été réinitialisés.")
+            self.refresh_users()
+        else:
+            self.set_edit_message("Vote enregistré (1/2). Un deuxième admin doit cliquer.")
+
         cursor.close()
 
 
