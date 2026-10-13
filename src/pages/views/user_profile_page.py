@@ -186,6 +186,14 @@ class UserProfilePage(QWidget):
             self.delete_button.clicked.connect(self.delete_user)
             self.delete_button.setFixedSize(120, 36)
 
+            self.reset_all_password_button = QPushButton("Réinitialiser tous les MDP")
+            self.reset_all_password_button.setObjectName("actionButton")
+            self.reset_all_password_button.setCursor(Qt.PointingHandCursor)
+            self.reset_all_password_button.clicked.connect(self.reset_all_passwords)
+            self.reset_all_password_button.setFixedSize(200, 36)
+
+    
+
             self.add_message = QLabel("")
             self.add_message.setObjectName("statusMessage")
 
@@ -241,6 +249,7 @@ class UserProfilePage(QWidget):
             edit_actions.addWidget(self.update_button)
             edit_actions.addWidget(self.reset_password_button)
             edit_actions.addWidget(self.delete_button)
+            edit_actions.addWidget(self.reset_all_password_button)
             edit_actions.addStretch(1)
 
             add_layout.addWidget(add_title)
@@ -439,6 +448,15 @@ class UserProfilePage(QWidget):
             return
 
         self.set_edit_message("Échec de la réinitialisation du MDP.", True)
+
+    def reset_all_passwords(self):
+        cursor = self.db._cursor()
+        cursor.execute("UPDATE users SET is_temporary = TRUE;")
+        self.db._connection().commit()
+        self.set_edit_message("Tous les mots de passe ont été réinitialisés.")
+        self.refresh_users()
+        cursor.close()
+
 
     def delete_user(self):
         username = self.selected_username
