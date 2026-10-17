@@ -264,3 +264,84 @@ def genererTableauCIDR() -> list[list[str]]:
         tableResult.append(line)
 
     return tableResult
+
+
+# --- Division d'un reseau en sous-reseaux ---
+
+# --- conversion masque -> CIDR (ex: 255.255.255.0 -> 24), inverse de _cidrToMask ---
+def maskToCidr(mask: str) -> int | None:
+    normalized = parseMask(mask)
+    if not normalized or not isSubnetMask(normalized):
+        return None
+
+    # le CIDR = nombre de bits a 1 dans le masque
+    cidr = 0
+    for part in normalized.split("."):
+        cidr += int_to_bin(int(part)).count("1")
+
+    return cidr
+
+# --- conversion IP -> entier 32 bits (pour pouvoir additionner le pas) ---
+def _ipToInt(ip: str) -> int | None:
+    if not isIp(ip):
+        return None
+
+    # on colle les 4 octets en binaire puis on convertit les 32 bits en entier
+    bits = []
+    for part in ip.split("."):
+        bits.append(int_to_bin(int(part)))
+
+    return bin_to_int("".join(bits))
+
+# --- conversion entier 32 bits -> IP ---
+def _intToIp(value: int) -> str:
+    # on complete a 32 bits puis on recoupe en 4 octets de 8 bits
+    bits = int_to_bin(value).zfill(32)
+    octets = []
+
+    for i in range(0, 32, 8):
+        octets.append(str(bin_to_int(bits[i:i + 8])))
+
+    return ".".join(octets)
+
+# --- etape 2 : on cherche n pour que 2^n >= nombre de sous-reseaux ---
+def getSubnetBits(number_subnet: int) -> int:
+    n = 0
+    while 2 ** n < number_subnet:
+        n += 1
+
+    return n
+
+# --- etape 3/4 : pas entre deux IP reseau = 2^(32 - CIDR) (ex: 2^6 = 64 = 62 IP utilisables + 2) ---
+def getSubnetStep(cidr: int) -> int:
+    # 2^(32 - CIDR) = IP utilisables + adresse reseau + adresse broadcast
+    return 2 ** (32 - cidr)
+
+# --- affichage : N° | IP reseau | IP broadcast | 1ere IP | derniere IP ---
+def divideSubnetwork(ip: str, mask: str, number_subnet: int, new_cidr: int) -> list[list[str]]:
+    network = getNetworkAddress(ip, mask)
+    if network == ClassMask.ERROR.value:
+        return []
+
+    step = getSubnetStep(new_cidr)
+
+    # on part de l'adresse reseau (au cas ou l'utilisateur donne une IP d'hote)
+    network_value = _ipToInt(network)
+
+    tableResult = []
+    for i in range(number_subnet):
+        line = []
+
+        # chaque sous-reseau commence un pas plus loin que le precedent
+        subnet_value = network_value + i * step
+        broadcast_value = subnet_value + step - 1
+
+        line.append(f"{i + 1}")
+        line.append(_intToIp(subnet_value))
+        line.append(_intToIp(broadcast_value))
+        line.append(_intToIp(subnet_value + 1))
+        line.append(_intToIp(broadcast_value - 1))
+
+        tableResult.append(line)
+
+    return tableResult
