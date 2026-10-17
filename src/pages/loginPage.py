@@ -57,6 +57,13 @@ class LoginWindow(QWidget):
 
 		self.pending_username = None
 
+		# --- Logo de l'app (au dessus des formulaires connexion et reset) ---
+		self.logo = QLabel()
+		self.logo.setAlignment(Qt.AlignCenter)
+		logo_pix = QPixmap(os.path.join(base_dir, "assets", "images", "logo.png"))
+		if not logo_pix.isNull():
+			self.logo.setPixmap(logo_pix.scaled(72, 72, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+
 		# --- Formulaire connexion ---
 		self.login_form = QFrame()
 		self.login_form.setObjectName("loginForm")
@@ -161,6 +168,8 @@ class LoginWindow(QWidget):
 		self.message.setAlignment(Qt.AlignCenter)
 		self.message.setWordWrap(True)
 
+		right_layout.addWidget(self.logo)
+		right_layout.addSpacing(10)
 		right_layout.addWidget(self.login_form)
 		right_layout.addWidget(self.reset_form)
 		right_layout.addWidget(self.message)

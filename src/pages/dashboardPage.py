@@ -1,7 +1,7 @@
 import os
 
 from PySide6.QtCore import Qt, Signal, QSize
-from PySide6.QtGui import QIcon
+from PySide6.QtGui import QIcon, QPixmap
 from PySide6.QtWidgets import QButtonGroup, QFrame, QHBoxLayout, QLabel, QPushButton, QStackedWidget, QVBoxLayout, QWidget
 
 from ..services.database import Database
@@ -62,11 +62,24 @@ class DashboardWindow(QWidget):
         brand = QLabel("NetCheck")
         brand.setObjectName("sidebarBrand")
 
+        # --- Logo a cote du nom de l'app ---
+        brand_logo = QLabel()
+        logo_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "assets", "images", "logo.png"))
+        logo_pix = QPixmap(logo_path)
+        if not logo_pix.isNull():
+            brand_logo.setPixmap(logo_pix.scaled(34, 34, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+
+        brand_row = QHBoxLayout()
+        brand_row.setSpacing(8)
+        brand_row.addWidget(brand_logo)
+        brand_row.addWidget(brand)
+        brand_row.addStretch(1)
+
         separator = QFrame()
         separator.setFrameShape(QFrame.HLine)
         separator.setFrameShadow(QFrame.Sunken)
 
-        nav_layout.addWidget(brand)
+        nav_layout.addLayout(brand_row)
         nav_layout.addWidget(separator)
         nav_layout.addSpacing(10)
 

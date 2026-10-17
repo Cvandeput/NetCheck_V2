@@ -1,5 +1,6 @@
 import sys
 import os
+from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
 
 from src.pages.loginPage import LoginWindow
@@ -30,8 +31,16 @@ def loadStyleSheet():
     
 
 
+# --- Windows : identifiant propre a l'app pour afficher le logo dans la barre des taches (sinon icone python) ---
+if sys.platform == "win32":
+    import ctypes
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("NetCheck")
+
 app = QApplication(sys.argv)
 app.setStyleSheet(loadStyleSheet())
+
+# --- Logo de l'app (applique a toutes les fenetres) ---
+app.setWindowIcon(QIcon(os.path.join(os.path.dirname(__file__), "src", "assets", "images", "logo.png")))
 
 
 window = LoginWindow()
