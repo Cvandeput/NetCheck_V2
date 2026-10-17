@@ -1,7 +1,7 @@
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QPushButton, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 
-from ...services.logic import isIp, parseMask, isSubnetMask
+from ...services.logic import isIp, parseMask, isSubnetMask, maskToCidr, getSubnetBits, getSubnetStep, divideSubnetwork
 
 class DivideSubnetworkPage(QWidget):
     def __init__(self):
@@ -90,10 +90,22 @@ class DivideSubnetworkPage(QWidget):
             result_layout.addWidget(self.status_badge, 0, Qt.AlignLeft)
             result_layout.addWidget(self.result)
 
+            # --- Tableau des sous-reseaux ---
+            self.table = QTableWidget(0, 5)
+            self.table.setHorizontalHeaderLabels(["N°", "IP réseau", "IP broadcast", "1ère IP", "Dernière IP"])
+            self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+            self.table.verticalHeader().setVisible(False)
+            self.table.setAlternatingRowColors(True)
+            self.table.setObjectName("cidrTable") # --- reutilise le style du tableau CIDR ---
+            self.table.setSelectionBehavior(QTableWidget.SelectRows)
+            self.table.setEditTriggers(QTableWidget.NoEditTriggers)
+            self.table.setVisible(False)
+
             card_layout.addLayout(row)
             card_layout.addWidget(self.empty_state)
             card_layout.addWidget(self.result_card)
-            card_layout.addStretch(1)
+            card_layout.addWidget(self.table, 1)
+            card_layout.addStretch(0) # --- 0 : le tableau prend toute la place libre quand il est affiche ---
 
             layout.addWidget(card)
             
@@ -109,7 +121,10 @@ class DivideSubnetworkPage(QWidget):
         
         self.empty_state.setVisible(False)
         self.result_card.setVisible(True)
-        
+
+        # --- on cache le tableau tant que le calcul n'est pas valide ---
+        self.table.setVisible(False)
+
         # --- affichage des erreurs ---
         if not isIp(ip):
             self.result.setText("Adresse IP invalide")
@@ -129,4 +144,82 @@ class DivideSubnetworkPage(QWidget):
             self.status_badge.style().polish(self.status_badge)
             return
         
-        # --- inserer la logique pour les calculs ici ---
+        # --- etape 1 : verification du nombre d'IP et du nombre de sous-reseaux (entier > 0) ---
+        if not number_ip.isdigit() or int(number_ip) == 0:
+            self.result.setText("Nombre d'IP invalide")
+            self.result.setStyleSheet("color: #ef4444;")
+            self.status_badge.setText("ERREUR")
+            self.status_badge.setObjectName("badgeInvalid")
+            self.status_badge.style().unpolish(self.status_badge)
+            self.status_badge.style().polish(self.status_badge)
+            return
+
+        if not number_subnet.isdigit() or int(number_subnet) == 0:
+            self.result.setText("Nombre de sous-réseaux invalide")
+            self.result.setStyleSheet("color: #ef4444;")
+            self.status_badge.setText("ERREUR")
+            self.status_badge.setObjectName("badgeInvalid")
+            self.status_badge.style().unpolish(self.status_badge)
+            self.status_badge.style().polish(self.status_badge)
+            return
+
+        number_ip = int(number_ip)
+        number_subnet = int(number_subnet)
+
+        # --- etape 2 : nouveau masque classless (CIDR + n avec 2^n >= nombre de sous-reseaux) ---
+        subnet_bits = getSubnetBits(number_subnet)
+        new_cidr = maskToCidr(normalized_mask) + subnet_bits
+
+        # --- plus de bits disponibles -> trop de sous-reseaux demandes pour ce masque ---
+        if new_cidr > 32:
+            self.result.setText("Trop de sous-réseaux demandés pour ce masque")
+            self.result.setStyleSheet("color: #ef4444;")
+            self.status_badge.setText("ERREUR")
+            self.status_badge.setObjectName("badgeInvalid")
+            self.status_badge.style().unpolish(self.status_badge)
+            self.status_badge.style().polish(self.status_badge)
+            return
+
+        # --- etape 3 : IP utilisables = pas - 2 (adresse reseau + broadcast), 0 pour /31 et /32 ---
+        step = getSubnetStep(new_cidr)
+        hosts = max(step - 2, 0)
+        if hosts < number_ip:
+            self.result.setText(
+                f"Pas assez d'IP par sous-réseau avec un /{new_cidr} "
+                f"({hosts} disponibles pour {number_ip} demandées)"
+            )
+            self.result.setStyleSheet("color: #ef4444;")
+            self.status_badge.setText("ERREUR")
+            self.status_badge.setObjectName("badgeInvalid")
+            self.status_badge.style().unpolish(self.status_badge)
+            self.status_badge.style().polish(self.status_badge)
+            return
+
+        # --- etape 4 : generation des sous-reseaux avec le pas ---
+        rows = divideSubnetwork(ip, normalized_mask, number_subnet, new_cidr)
+
+        # --- affichage du resume ---
+        self.result.setText(
+            "Nouveau masque : "
+            f"/{new_cidr} ({parseMask(str(new_cidr))})\n"
+            "Sous-réseaux possibles : "
+            f"{2 ** subnet_bits}\n"
+            "IP utilisables par sous-réseau : "
+            f"{hosts}\n"
+            "Pas entre deux réseaux : "
+            f"{step}"
+        )
+        self.result.setStyleSheet("color: #22c55e;")
+        self.status_badge.setText("SOUS-RÉSEAU")
+        self.status_badge.setObjectName("badgeValid")
+        self.status_badge.style().unpolish(self.status_badge)
+        self.status_badge.style().polish(self.status_badge)
+
+        # --- affichage du tableau : N° | IP reseau | IP broadcast | 1ere IP | derniere IP ---
+        self.table.setRowCount(len(rows))
+
+        for row_idx, row_values in enumerate(rows):
+            for col_idx, cell_value in enumerate(row_values):
+                self.table.setItem(row_idx, col_idx, QTableWidgetItem(cell_value))
+
+        self.table.setVisible(True)
