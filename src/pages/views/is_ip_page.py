@@ -94,12 +94,14 @@ class IsIpPage(QWidget):
 
     def charger_liste(self):
         self.ip_input.clear()  # Vide la liste
-        for id_ip, ip in self.db.getIps():  # Récupère les IPs depuis database.py
-            self.ip_input.addItem(ip, id_ip)  # Affiche l'IP et garde son id en mémoire
+        for id_ip, ip,username in self.db.getIps():  # Récupère les IPs depuis database.py
+            self.ip_input.addItem(ip + "  (" + username + ")", (id_ip, ip) ) 
         self.ip_input.setCurrentIndex(-1)
 
     def selectionner_ip(self):
-        self.idSelection = self.ip_input.currentData()
+        id_ip, ip = self.ip_input.currentData()
+        self.idSelection = id_ip
+        self.ip_input.setEditText(ip)
 
 
     def run_check(self):

@@ -457,7 +457,7 @@ class Database:
 
     def getIps(self):
         cursor = self._cursor()
-        cursor.execute("SELECT id, ip FROM actions_is_ip")
+        cursor.execute("SELECT id, ip,username FROM actions_is_ip")
         return cursor.fetchall()  
 
     def addIp(self, user_id, username, ip):
