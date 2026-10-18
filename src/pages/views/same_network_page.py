@@ -3,8 +3,6 @@ from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButto
 
 from ...services.logic import areIpsInSameNetwork, getNetworkAddress, isIp, isSubnetMask, parseMask
 
-
-
 class SameNetworkPage(QWidget):
     def __init__(self):
         super().__init__()
