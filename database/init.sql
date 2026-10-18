@@ -18,13 +18,21 @@ Create table public.userActions
     id_modification SERIAL PRIMARY KEY,
     ip_1 VARCHAR(15) NOT NULL,
     ip_2 VARCHAR(15) ,
-    masque_1 VARCHAR(15) NOT NULL,
+    masque_1 VARCHAR(15) ,
     masque_2 VARCHAR(15) ,
     number_subnet integer,
     number_ip integer ,
     user_id integer REFERENCES public.users(id),
-    id_function INT Check (id_function IN (0, 1)) --1 ou 0 
+    id_function INT NOT NULL CHECK (id_function BETWEEN 0 AND 5)
 );
+
+CREATE TABLE public.actions_is_ip (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES public.users(id),
+    username VARCHAR(50) NOT NULL,
+    ip VARCHAR(15) NOT NULL
+);
+
 
 CREATE TABLE adminResetMdp (
     user_id INTEGER PRIMARY KEY REFERENCES users(id),

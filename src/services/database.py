@@ -454,3 +454,21 @@ class Database:
             "role": self.userRole,
             "last_login": self.previous_last_login
         }
+
+    def getIps(self):
+        cursor = self._cursor()
+        cursor.execute("SELECT id, ip FROM actions_is_ip")
+        return cursor.fetchall()  
+
+    def addIp(self, user_id, username, ip):
+        cursor = self._cursor()
+        cursor.execute(
+            "INSERT INTO actions_is_ip (user_id, username, ip) VALUES (%s, %s, %s)",
+            (user_id, username, ip),
+        )
+        self._connection().commit()
+
+    def updateIp(self, id_ip, ip,user_id, username):
+        cursor = self._cursor()
+        cursor.execute("UPDATE actions_is_ip SET ip = %s , user_id = %s , username = %s WHERE id = %s", (ip, user_id, username, id_ip))
+        self._connection().commit()

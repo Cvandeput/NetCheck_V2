@@ -454,7 +454,7 @@ class UserProfilePage(QWidget):
     def reset_all_passwords(self):
         cursor = self.db._cursor()
         now = datetime.now()
-        cursor.execute("DELETE FROM adminResetMdp WHERE request_date < %s - INTERVAL '3 minutes';", (now,))
+        cursor.execute("DELETE FROM adminResetMdp WHERE request_date < %s - INTERVAL '1 day';", (now,))
         cursor.execute("SELECT user_id FROM adminResetMdp WHERE user_id = %s;", (self.current_id,))
         if not cursor.fetchone():
             cursor.execute("INSERT INTO adminResetMdp (user_id, request_date) VALUES (%s, %s);", (self.current_id, now))

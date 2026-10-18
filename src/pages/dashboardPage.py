@@ -27,7 +27,6 @@ class DashboardWindow(QWidget):
         session_user = user_info if user_info is not None else db.getUserInfo()
         username = session_user["username"] if session_user else "Utilisateur"
         role = session_user["role"] if session_user else "RÔLE INCONNU"
-
         self.setObjectName("dashboardWindow")
         self.setWindowTitle("NetCheck - Tableau de bord")
         self.setFixedSize(1150, 650)
@@ -103,7 +102,7 @@ class DashboardWindow(QWidget):
         # --- Liste des pages ---
         pages = [
             ("Table CIDR", "Affiche les masques de /8 à /30 en CIDR, binaire et décimal", QIcon(os.path.join(icons_dir, "cidr.svg")), CidrTablePage()),
-            ("Validation IP", "Vérifie si une adresse IPv4 a le bon format", QIcon(os.path.join(icons_dir, "ip.svg")), IsIpPage()),
+            ("Validation IP", "Vérifie si une adresse IPv4 a le bon format", QIcon(os.path.join(icons_dir, "ip.svg")), IsIpPage(user_info=session_user)),
             ("Classe IP", "Détermine la classe et signale les IP privées ou réservées", QIcon(os.path.join(icons_dir, "class.svg")), GetIpClassPage()),
             ("Masque de classe", "Retourne le masque par défaut selon la classe IP", QIcon(os.path.join(icons_dir, "mask.svg")), GetIpClassMaskPage()),
             ("Réseau classful", "Calcule l'adresse réseau avec une IP et un masque classful", QIcon(os.path.join(icons_dir, "subnet.svg")), GetSubnetPage()),
