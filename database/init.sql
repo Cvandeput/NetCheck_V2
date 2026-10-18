@@ -29,6 +29,7 @@ Create table public.get_ip_class
     id_modification SERIAL PRIMARY KEY,
     ip VARCHAR(15) NOT NULL,
     user_id integer REFERENCES public.users(id),
+    username VARCHAR(50)  REFERENCES public.users(username)
 );
 
 -- table pour page get_ip_class_mask_page.py -- Masque de classe
@@ -37,6 +38,7 @@ Create table public.get_ip_class_mask
     id_modification SERIAL PRIMARY KEY,
     ip VARCHAR(15) NOT NULL,
     user_id integer REFERENCES public.users(id),
+    username VARCHAR(50)  REFERENCES public.users(username)
 );
 
 -- table pour page get_subnet_page.py -- Réseau classful
@@ -46,6 +48,7 @@ Create table public.get_subnet
     ip_1 VARCHAR(15) NOT NULL,
     masque_1 VARCHAR(15) NOT NULL,
     user_id integer REFERENCES public.users(id),
+    username VARCHAR(50)  REFERENCES public.users(username)
 );
 
 -- table pour page same_network_page.py -- Même réseau
@@ -57,6 +60,7 @@ Create table public.same_network
     masque_1 VARCHAR(15) NOT NULL,
     masque_2 VARCHAR(15) NOT NULL,
     user_id integer REFERENCES public.users(id), 
+    username VARCHAR(50)  REFERENCES public.users(username)
 );
 
 -- table pour page divide_subnetwork_page.py -- Nombre Sous réseau
@@ -70,7 +74,7 @@ Create table public.divide_subnetwork
     number_subnet integer,
     number_ip integer ,
     user_id integer REFERENCES public.users(id),
-    id_function INT Check (id_function IN (0, 1)) --1 ou 0 
+    username VARCHAR(50)  REFERENCES public.users(username)
 );
 
 -- Utils
