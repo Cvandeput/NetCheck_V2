@@ -51,6 +51,14 @@ Create table public.get_subnet
     username VARCHAR(50)  REFERENCES public.users(username)
 );
 
+create table public.actions_is_ip
+(
+    id SERIAL PRIMARY KEY,
+    ip VARCHAR(15) NOT NULL,
+    user_id integer REFERENCES public.users(id),
+    username VARCHAR(50)  REFERENCES public.users(username)
+);
+
 -- table pour page same_network_page.py -- Même réseau
 Create table public.same_network
 (

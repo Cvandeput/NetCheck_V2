@@ -38,8 +38,7 @@ class IsIpPage(QWidget):
 
         run_button = QPushButton("Vérifier")
         run_button.setObjectName("actionButton")
-        run_button.setFixedWidth(140)
-        run_button.setFixedHeight(48)
+        run_button.setFixedSize(168, 46)
         run_button.setCursor(Qt.PointingHandCursor)
         run_button.clicked.connect(self.run_check)
 
@@ -97,6 +96,7 @@ class IsIpPage(QWidget):
         self.ip_input.clear()  # Vide la liste
         for id_ip, ip in self.db.getIps():  # Récupère les IPs depuis database.py
             self.ip_input.addItem(ip, id_ip)  # Affiche l'IP et garde son id en mémoire
+        self.ip_input.setCurrentIndex(-1)
 
     def selectionner_ip(self):
         self.idSelection = self.ip_input.currentData()

@@ -32,7 +32,7 @@ class GetIpClassPage(QWidget):
 
         run_button = QPushButton("Obtenir la classe")
         run_button.setObjectName("actionButton")
-        run_button.setFixedSize(160, 46)
+        run_button.setFixedSize(168, 46)
         run_button.setCursor(Qt.PointingHandCursor)
         run_button.clicked.connect(self.run_check)
 
