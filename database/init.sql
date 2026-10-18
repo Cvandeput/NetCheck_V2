@@ -1,5 +1,6 @@
 -- Database: PostgreSQL
 
+-- table utilisateur
 CREATE TABLE public.users (
     id SERIAL PRIMARY KEY,
     username VARCHAR(50) NOT NULL UNIQUE,
@@ -13,7 +14,53 @@ CREATE TABLE public.users (
     lockout_count INTEGER DEFAULT 0 NOT NULL --ajoute du nombre de blocage
 );
 
-Create table public.userActions
+-- sauvegarde input chaque page --
+
+-- Création de la table CIDR
+CREATE TABLE public.cidr_table (
+    cidr INTEGER PRIMARY KEY CHECK (cidr >= 8 AND cidr <= 30),
+    binaire VARCHAR(35) NOT NULL,
+    decimal VARCHAR(15) NOT NULL
+);
+
+-- table pour page get_ip_class_page.py -- classe IP
+Create table public.get_ip_class
+(
+    id_modification SERIAL PRIMARY KEY,
+    ip VARCHAR(15) NOT NULL,
+    user_id integer REFERENCES public.users(id),
+);
+
+-- table pour page get_ip_class_mask_page.py -- Masque de classe
+Create table public.get_ip_class_mask
+(
+    id_modification SERIAL PRIMARY KEY,
+    ip VARCHAR(15) NOT NULL,
+    user_id integer REFERENCES public.users(id),
+);
+
+-- table pour page get_subnet_page.py -- Réseau classful
+Create table public.get_subnet
+(
+    id_modification SERIAL PRIMARY KEY,
+    ip_1 VARCHAR(15) NOT NULL,
+    masque_1 VARCHAR(15) NOT NULL,
+    user_id integer REFERENCES public.users(id),
+);
+
+-- table pour page same_network_page.py -- Même réseau
+Create table public.same_network
+(
+    id_modification SERIAL PRIMARY KEY,
+    ip_1 VARCHAR(15) NOT NULL,
+    ip_2 VARCHAR(15) NOT NULL,
+    masque_1 VARCHAR(15) NOT NULL,
+    masque_2 VARCHAR(15) NOT NULL,
+    user_id integer REFERENCES public.users(id), 
+);
+
+-- table pour page divide_subnetwork_page.py -- Nombre Sous réseau
+Create table public.divide_subnetwork
 (
     id_modification SERIAL PRIMARY KEY,
     ip_1 VARCHAR(15) NOT NULL,
@@ -26,17 +73,23 @@ Create table public.userActions
     id_function INT Check (id_function IN (0, 1)) --1 ou 0 
 );
 
+-- Utils
+
+-- table reset password en cas de mdp compromis
 CREATE TABLE adminResetMdp (
     user_id INTEGER PRIMARY KEY REFERENCES users(id),
     request_date TIMESTAMP(0) WITHOUT TIME ZONE
 );
 
--- Création de la table CIDR
-CREATE TABLE public.cidr_table (
-    cidr INTEGER PRIMARY KEY CHECK (cidr >= 8 AND cidr <= 30),
-    binaire VARCHAR(35) NOT NULL,
-    decimal VARCHAR(15) NOT NULL
-);
+-- Insertions
+
+-- insert des differents user
+INSERT INTO public.users (username, hashpassword, role, is_temporary, is_active, locked_until, lockout_count) VALUES 
+    ('User1', '$2b$13$bHlfV9VzzlDnd67MQoJtFOnjus0tPTc24YLoZ8uCYRjmQuZLbjiCi', 'admin',  false,  true, NULL, 0),
+    ('User2', '$2b$13$bHlfV9VzzlDnd67MQoJtFOnjus0tPTc24YLoZ8uCYRjmQuZLbjiCi', 'membre', false,  true, NULL, 0),
+    ('User3', '$2b$13$bHlfV9VzzlDnd67MQoJtFOnjus0tPTc24YLoZ8uCYRjmQuZLbjiCi', 'membre', true,   true, NULL, 0),
+    ('User4', '$2b$13$bHlfV9VzzlDnd67MQoJtFOnjus0tPTc24YLoZ8uCYRjmQuZLbjiCi', 'membre', false,  true, '2026-12-31 23:59:59',3),
+    ('User5', '$2b$13$bHlfV9VzzlDnd67MQoJtFOnjus0tPTc24YLoZ8uCYRjmQuZLbjiCi', 'membre', false, false, NULL, 0);
 
 -- Insertion des masques CIDR de 8 à 30
 INSERT INTO public.cidr_table (cidr, binaire, decimal) VALUES
@@ -63,10 +116,3 @@ INSERT INTO public.cidr_table (cidr, binaire, decimal) VALUES
     (28, '11111111.11111111.11111111.11110000', '255.255.255.240'),
     (29, '11111111.11111111.11111111.11111000', '255.255.255.248'),
     (30, '11111111.11111111.11111111.11111100', '255.255.255.252');
-
-INSERT INTO public.users (username, hashpassword, role, is_temporary, is_active, locked_until, lockout_count) VALUES 
-    ('User1', '$2b$13$bHlfV9VzzlDnd67MQoJtFOnjus0tPTc24YLoZ8uCYRjmQuZLbjiCi', 'admin',  false,  true, NULL, 0),
-    ('User2', '$2b$13$bHlfV9VzzlDnd67MQoJtFOnjus0tPTc24YLoZ8uCYRjmQuZLbjiCi', 'membre', false,  true, NULL, 0),
-    ('User3', '$2b$13$bHlfV9VzzlDnd67MQoJtFOnjus0tPTc24YLoZ8uCYRjmQuZLbjiCi', 'membre', true,   true, NULL, 0),
-    ('User4', '$2b$13$bHlfV9VzzlDnd67MQoJtFOnjus0tPTc24YLoZ8uCYRjmQuZLbjiCi', 'membre', false,  true, '2026-12-31 23:59:59',3),
-    ('User5', '$2b$13$bHlfV9VzzlDnd67MQoJtFOnjus0tPTc24YLoZ8uCYRjmQuZLbjiCi', 'membre', false, false, NULL, 0);
