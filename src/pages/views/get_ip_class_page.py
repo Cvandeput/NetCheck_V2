@@ -1,13 +1,18 @@
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget, QListWidget, QListWidgetItem
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget, QListWidget,QComboBox, QListWidgetItem
+
+from ...services.database import Database
 
 from ...services.logic import ClassMask, getIPClass, isPrivateIp, isReservedIp
 
 
 
 class GetIpClassPage(QWidget):
-    def __init__(self):
+    def __init__(self, user_info):
         super().__init__()
+        self.db = Database()
+        self.user_info = user_info
+        self.idSelection = None
 
         # --- Structure principale ---
         layout = QVBoxLayout(self)
@@ -24,11 +29,13 @@ class GetIpClassPage(QWidget):
         row = QHBoxLayout()
         row.setSpacing(10)
 
-        self.ip_input = QLineEdit()
-        self.ip_input.setPlaceholderText("IPv4")
+        self.ip_input = QComboBox()
+        self.ip_input.setEditable(True)
+        self.ip_input.lineEdit().setPlaceholderText("IPv4")
         self.ip_input.setObjectName("primaryInput")
-        self.ip_input.setFixedHeight(46)
-        self.ip_input.returnPressed.connect(self.run_check)
+        self.ip_input.setFixedHeight(48)
+        self.ip_input.lineEdit().returnPressed.connect(self.run_check)
+        self.ip_input.activated.connect(self.selectionner_ip)
 
         run_button = QPushButton("Obtenir la classe")
         run_button.setObjectName("actionButton")
@@ -68,24 +75,31 @@ class GetIpClassPage(QWidget):
         result_layout.addWidget(self.status_badge, 0, Qt.AlignLeft)
         result_layout.addWidget(self.result)
 
-        #ajouter ici la partie pour l'historique -- TEST
-        data_history = QListWidget()
-        data_history.addItems(["Apple", "Banana", "Cherry"])
-        data_history.item(1).setText("Blueberry") #remplace "banana"
 
 
         card_layout.addLayout(row)
         card_layout.addWidget(self.empty_state)
         card_layout.addWidget(self.result_card)
-        card_layout.addWidget(data_history)
         card_layout.addStretch(1)
 
         layout.addWidget(card)
+        
+        self.charger_liste()
 
+    def charger_liste(self):
+        self.ip_input.clear()  # Vide la liste
+        for id_ip, ip,username in self.db.getIps(2):  # Récupère les IPs depuis database.py
+            self.ip_input.addItem(ip + "  (" + username + ")", (id_ip, ip) ) 
+        self.ip_input.setCurrentIndex(-1)
+
+    def selectionner_ip(self):
+        id_ip, ip = self.ip_input.currentData()
+        self.idSelection = id_ip
+        self.ip_input.setEditText(ip)
 
     def run_check(self):
         # --- Execution du calcul de classe ---
-        ip = self.ip_input.text().strip()
+        ip = self.ip_input.currentText().strip()
         ip_class = getIPClass(ip)
 
         self.empty_state.setVisible(False)
@@ -121,3 +135,11 @@ class GetIpClassPage(QWidget):
         self.status_badge.setObjectName("badgeValid")
         self.status_badge.style().unpolish(self.status_badge)
         self.status_badge.style().polish(self.status_badge)
+
+        if self.idSelection is not None:
+            self.db.updateIp(self.idSelection, ip, self.user_info["id"], self.user_info["username"],2)  
+        else:
+            self.db.addIp(self.user_info["id"], self.user_info["username"], ip,2)  
+        
+        self.charger_liste()  
+        self.idSelection = None  

@@ -455,20 +455,44 @@ class Database:
             "last_login": self.previous_last_login
         }
 
-    def getIps(self):
+    def getIps(self,id_fonction):
         cursor = self._cursor()
-        cursor.execute("SELECT id, ip,username FROM actions_is_ip")
+        match id_fonction:
+            case 1:
+                cursor.execute("SELECT id, ip,username FROM actions_is_ip")
+            case 2:
+                cursor.execute("SELECT id, ip,username FROM actions_get_ip_class")
+            case 3:
+                cursor.execute("select id, ip,username FROM actions_get_ip_class_mask")
         return cursor.fetchall()  
 
-    def addIp(self, user_id, username, ip):
+    def addIp(self, user_id, username, ip,id_fonction):
         cursor = self._cursor()
-        cursor.execute(
-            "INSERT INTO actions_is_ip (user_id, username, ip) VALUES (%s, %s, %s)",
-            (user_id, username, ip),
-        )
+        match id_fonction:
+            case 1:
+                cursor.execute(
+                    "INSERT INTO actions_is_ip (user_id, username, ip) VALUES (%s, %s, %s)",
+                    (user_id, username, ip),
+                )
+            case 2:
+                cursor.execute(
+                    "INSERT INTO actions_get_ip_class (user_id, username, ip) VALUES (%s, %s, %s)",
+                    (user_id, username, ip),
+                )
+            case 3:
+                cursor.execute(
+                    "INSERT INTO actions_get_ip_class_mask (user_id, username, ip) VALUES (%s, %s, %s)",
+                    (user_id, username, ip),
+                )
         self._connection().commit()
 
-    def updateIp(self, id_ip, ip,user_id, username):
+    def updateIp(self, id_ip, ip,user_id, username,id_fonction):
         cursor = self._cursor()
-        cursor.execute("UPDATE actions_is_ip SET ip = %s , user_id = %s , username = %s WHERE id = %s", (ip, user_id, username, id_ip))
+        match id_fonction:
+            case 1:
+                cursor.execute("UPDATE actions_is_ip SET ip = %s , user_id = %s , username = %s WHERE id = %s", (ip, user_id, username, id_ip))
+            case 2:
+                cursor.execute("UPDATE actions_get_ip_class SET ip = %s , user_id = %s , username = %s WHERE id = %s", (ip, user_id, username, id_ip))
+            case 3:
+                cursor.execute("UPDATE actions_get_ip_class_mask SET ip = %s , user_id = %s , username = %s WHERE id = %s", (ip, user_id, username, id_ip))
         self._connection().commit()

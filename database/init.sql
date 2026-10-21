@@ -24,18 +24,18 @@ CREATE TABLE public.cidr_table (
 );
 
 -- table pour page get_ip_class_page.py -- classe IP
-Create table public.get_ip_class
+Create table public.actions_get_ip_class
 (
-    id_modification SERIAL PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     ip VARCHAR(15) NOT NULL,
     user_id integer REFERENCES public.users(id),
     username VARCHAR(50)  REFERENCES public.users(username)
 );
 
 -- table pour page get_ip_class_mask_page.py -- Masque de classe
-Create table public.get_ip_class_mask
+Create table public.actions_get_ip_class_mask
 (
-    id_modification SERIAL PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     ip VARCHAR(15) NOT NULL,
     user_id integer REFERENCES public.users(id),
     username VARCHAR(50)  REFERENCES public.users(username)

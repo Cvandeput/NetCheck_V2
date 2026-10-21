@@ -94,7 +94,7 @@ class IsIpPage(QWidget):
 
     def charger_liste(self):
         self.ip_input.clear()  # Vide la liste
-        for id_ip, ip,username in self.db.getIps():  # Récupère les IPs depuis database.py
+        for id_ip, ip,username in self.db.getIps(1):  # Récupère les IPs depuis database.py
             self.ip_input.addItem(ip + "  (" + username + ")", (id_ip, ip) ) 
         self.ip_input.setCurrentIndex(-1)
 
@@ -121,9 +121,9 @@ class IsIpPage(QWidget):
             self.result_message.setText("Adresse IP valide")
             self.result_message.setStyleSheet("color: #22c55e;")
             if self.idSelection is not None:
-                self.db.updateIp(self.idSelection, ip, self.user_info["id"], self.user_info["username"])  
+                self.db.updateIp(self.idSelection, ip, self.user_info["id"], self.user_info["username"],1)  
             else:
-                self.db.addIp(self.user_info["id"], self.user_info["username"], ip)  
+                self.db.addIp(self.user_info["id"], self.user_info["username"], ip,1)  
 
             self.charger_liste()  
             self.idSelection = None  
