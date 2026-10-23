@@ -1,12 +1,16 @@
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QFrame, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QListWidget, QPushButton, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
+from ...services.database import Database
 
 from ...services.logic import isIp, parseMask, isSubnetMask, maskToCidr, getSubnetBits, getSubnetStep, divideSubnetwork
 
 class DivideSubnetworkPage(QWidget):
-    def __init__(self):
+    def __init__(self, user_info):
             super().__init__()
-            
+            self.db = Database()
+            self.user_info = user_info
+            self.idSelection = None
+
             # --- Structure principale ---
             layout = QVBoxLayout(self)
             layout.setContentsMargins(0, 0, 0, 0)
@@ -101,14 +105,38 @@ class DivideSubnetworkPage(QWidget):
             self.table.setEditTriggers(QTableWidget.NoEditTriggers)
             self.table.setVisible(False)
 
+            # --- Historique des calculs ---
+            self.data_history = QListWidget()
+            self.data_history.setObjectName("history")
+            self.data_history.setMaximumHeight(180) # --- laisse la place au tableau ---
+            self.data_history.itemClicked.connect(self.selectionner_ip)
+
             card_layout.addLayout(row)
             card_layout.addWidget(self.empty_state)
             card_layout.addWidget(self.result_card)
             card_layout.addWidget(self.table, 1)
             card_layout.addStretch(0) # --- 0 : le tableau prend toute la place libre quand il est affiche ---
+            card_layout.addWidget(self.data_history)
 
             layout.addWidget(card)
-            
+            self.charger_liste()
+
+    def charger_liste(self):
+        self.data_history.clear()
+        for id_ip, ip, masque, number_ip, number_subnet, username in self.db.getIps(6):
+            label = ip + "  /  " + masque + "  —  " + str(number_subnet) + " sous-réseaux, " + str(number_ip) + " IP  (" + username + ")"
+            item = QListWidgetItem(label)
+            item.setData(Qt.UserRole, (id_ip, ip, masque, number_ip, number_subnet))
+            self.data_history.addItem(item)
+
+    def selectionner_ip(self):
+        id_ip, ip, masque, number_ip, number_subnet = self.data_history.currentItem().data(Qt.UserRole)
+        self.idSelection = id_ip
+        self.ip_input.setText(ip)
+        self.mask_input.setText(masque)
+        self.number_ip_input.setText(str(number_ip))
+        self.number_subnet_input.setText(str(number_subnet))
+
     def run_check(self):
         
         # --- Execution du calcul de sous-reseau ---
@@ -223,3 +251,12 @@ class DivideSubnetworkPage(QWidget):
                 self.table.setItem(row_idx, col_idx, QTableWidgetItem(cell_value))
 
         self.table.setVisible(True)
+
+        # --- sauvegarde dans l'historique ---
+        if self.idSelection is not None:
+            self.db.updateIp(self.idSelection, ip, self.user_info["id"], self.user_info["username"], 6, masque=mask, number_ip=number_ip, number_subnet=number_subnet)
+        else:
+            self.db.addIp(self.user_info["id"], self.user_info["username"], ip, 6, masque=mask, number_ip=number_ip, number_subnet=number_subnet)
+
+        self.charger_liste()
+        self.idSelection = None

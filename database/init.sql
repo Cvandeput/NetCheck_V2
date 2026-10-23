@@ -72,17 +72,15 @@ Create table public.actions_same_network
 );
 
 -- table pour page divide_subnetwork_page.py -- Nombre Sous réseau
-Create table public.divide_subnetwork
+Create table public.actions_divide_subnetwork
 (
-    id_modification SERIAL PRIMARY KEY,
-    ip_1 VARCHAR(15) NOT NULL,
-    ip_2 VARCHAR(15) ,
-    masque_1 VARCHAR(15) ,
-    masque_2 VARCHAR(15) ,
-    number_subnet integer,
-    number_ip integer ,
+    id SERIAL PRIMARY KEY,
+    ip VARCHAR(15) NOT NULL,
+    masque VARCHAR(15) NOT NULL,
+    number_ip integer NOT NULL,
+    number_subnet integer NOT NULL,
     user_id integer REFERENCES public.users(id),
-    id_function INT Check (id_function IN (0, 1)) --1 ou 0 
+    username VARCHAR(50)  REFERENCES public.users(username)
 );
 
 

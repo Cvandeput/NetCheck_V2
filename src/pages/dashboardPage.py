@@ -110,7 +110,7 @@ class DashboardWindow(QWidget):
             
             #ajout page nbSR
 
-            ("Nombre Sous réseau", "Configuration sous réseau et IP", QIcon(os.path.join(icons_dir, "subnet.svg")), DivideSubnetworkPage()),
+            ("Nombre Sous réseau", "Configuration sous réseau et IP", QIcon(os.path.join(icons_dir, "subnet.svg")), DivideSubnetworkPage(user_info=session_user)),
         ]
 
         self.button_group = QButtonGroup(self)
