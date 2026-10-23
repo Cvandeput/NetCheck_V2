@@ -4,18 +4,6 @@
     border-radius: 18px;
 }
 
-#primaryInput {
-    background-color: #2e3349;
-    border: 1px solid #4a506f;
-    border-radius: 10px;
-    color: #f8fafc;
-    padding-left: 12px;
-}
-
-#primaryInput:focus {
-    border: 1px solid #a890ff;
-}
-
 #actionButton {
     background-color: #7c5cff;
     border: none;
@@ -34,15 +22,19 @@
     background-color: #6546dc;
 }
 
-/* ComboBox */
-QComboBox#primaryInput {
+/* QLineEdit + QComboBox */
+#primaryInput {
     background-color: #2e3349;
     border: 1px solid #4a506f;
     border-radius: 10px;
     color: #f8fafc;
     padding: 0px 0px 0px 12px;
+    font-size: 14px;
 }
-QComboBox#primaryInput:focus { border: 1px solid #a890ff; }
+
+#primaryInput:focus {
+    border: 1px solid #a890ff;
+}
 
 /* champ texte interne (annule le style global QLineEdit) */
 #primaryInput QLineEdit {
@@ -50,6 +42,7 @@ QComboBox#primaryInput:focus { border: 1px solid #a890ff; }
     border: none;
     padding: 0px;
     min-height: 0px;
+    font-size: 14px;
 }
 
 /* carr� de la fl�che */
@@ -73,6 +66,7 @@ QComboBox#primaryInput:focus { border: 1px solid #a890ff; }
     width: 14px;
     height: 14px;
 }
+
 #primaryInput::down-arrow:on { top: 1px; }
 
 #primaryInput QAbstractItemView {     /* la liste d�roulante */
@@ -81,6 +75,8 @@ QComboBox#primaryInput:focus { border: 1px solid #a890ff; }
     border: 1px solid #4a506f;
     selection-background-color: #7c5cff;
     outline: none;
+    font-size: 14px;
+    font-size: 14px;
 }
 
 /* QListWidget */

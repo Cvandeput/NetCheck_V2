@@ -87,7 +87,7 @@ class DivideSubnetworkPage(QWidget):
             self.status_badge.setObjectName("badgeNeutral")
             self.status_badge.setAlignment(Qt.AlignCenter)
             self.status_badge.setFixedWidth(140)
-            self.status_badge.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed) # --- garde sa hauteur quand le message est cache ---
+            self.status_badge.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
             self.result = QLabel("")
             self.result.setObjectName("statusMessage")

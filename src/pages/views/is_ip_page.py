@@ -32,7 +32,7 @@ class IsIpPage(QWidget):
         self.ip_input.setEditable(True)
         self.ip_input.lineEdit().setPlaceholderText("IPv4")
         self.ip_input.setObjectName("primaryInput")
-        self.ip_input.setFixedHeight(48)
+        self.ip_input.setFixedHeight(46)
         self.ip_input.lineEdit().returnPressed.connect(self.run_check)
         self.ip_input.activated.connect(self.selectionner_ip)
 
