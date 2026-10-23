@@ -33,3 +33,68 @@
 #actionButton:pressed {
     background-color: #6546dc;
 }
+
+/* ComboBox */
+QComboBox#primaryInput {
+    background-color: #2e3349;
+    border: 1px solid #4a506f;
+    border-radius: 10px;
+    color: #f8fafc;
+    padding: 0px 0px 0px 12px;
+}
+QComboBox#primaryInput:focus { border: 1px solid #a890ff; }
+
+/* champ texte interne (annule le style global QLineEdit) */
+#primaryInput QLineEdit {
+    background: transparent;
+    border: none;
+    padding: 0px;
+    min-height: 0px;
+}
+
+/* carr� de la fl�che */
+#primaryInput::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: center right;
+    width: 36px;
+    height: 36px;
+    margin-right: 5px;
+    background-color: #3d4363;
+    border: none;
+    border-radius: 8px;
+}
+#primaryInput::drop-down:hover { background-color: #4a5172; }
+
+/* fl�che centr�e dans le carr� */
+#primaryInput::down-arrow {
+    image: url(src/assets/icons/arrow-down.svg);
+    subcontrol-origin: content;
+    subcontrol-position: center;
+    width: 14px;
+    height: 14px;
+}
+#primaryInput::down-arrow:on { top: 1px; }
+
+#primaryInput QAbstractItemView {     /* la liste d�roulante */
+    background-color: #2e3349;
+    color: #f8fafc;
+    border: 1px solid #4a506f;
+    selection-background-color: #7c5cff;
+    outline: none;
+}
+
+/* QListWidget */
+#history {
+    background-color: #2e3349;
+    border: 1px solid #4a5172;
+    border-radius: 12px;
+    color: #f8fafc;
+    padding: 4px;
+    outline: none;
+}
+#history::item {
+    padding: 8px;
+    border-radius: 6px;
+}
+#history::item:hover    { background-color: #3d4363; }
+#history::item:selected { background-color: #7c5cff; color: white; }

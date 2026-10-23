@@ -89,7 +89,7 @@ class SameNetworkPage(QWidget):
         result_layout.addWidget(self.result)
 
         self.data_history = QListWidget()
-        self.data_history.setObjectName("cidrTable")
+        self.data_history.setObjectName("history")
         self.data_history.itemClicked.connect(self.selectionner_ip)
 
         card_layout.addLayout(row)
