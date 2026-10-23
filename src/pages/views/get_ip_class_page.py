@@ -76,18 +76,18 @@ class GetIpClassPage(QWidget):
         result_layout.addWidget(self.result)
 
         #ajouter ici la partie pour l'historique -- TEST
-        data_history = QListWidget()
-        data_history.addItems(["Apple", "Banana", "Cherry"])
-        data_history.item(1).setText("Blueberry") #remplace "banana"
+        #data_history = QListWidget()    
+        #data_history.addItems(["Apple", "Banana", "Cherry"])
+        #data_history.item(1).setText("Blueberry") #remplace "banana"
 
         card_layout.addLayout(row)
         card_layout.addWidget(self.empty_state)
         card_layout.addWidget(self.result_card)
-        card_layout.addWidget(data_history)
+        #card_layout.addWidget(data_history)
         card_layout.addStretch(1)
 
         layout.addWidget(card)
-        
+        self.ip_input.setEditText("")
         self.charger_liste()
 
     def charger_liste(self):

@@ -42,11 +42,11 @@ Create table public.actions_get_ip_class_mask
 );
 
 -- table pour page get_subnet_page.py -- Réseau classful
-Create table public.get_subnet
+Create table public.actions_get_subnet
 (
-    id_modification SERIAL PRIMARY KEY,
-    ip_1 VARCHAR(15) NOT NULL,
-    masque_1 VARCHAR(15) NOT NULL,
+    id SERIAL PRIMARY KEY,
+    ip VARCHAR(15) NOT NULL,
+    masque VARCHAR(15) NOT NULL,
     user_id integer REFERENCES public.users(id),
     username VARCHAR(50)  REFERENCES public.users(username)
 );
@@ -60,9 +60,9 @@ create table public.actions_is_ip
 );
 
 -- table pour page same_network_page.py -- Même réseau
-Create table public.same_network
+Create table public.actions_same_network
 (
-    id_modification SERIAL PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     ip_1 VARCHAR(15) NOT NULL,
     ip_2 VARCHAR(15) NOT NULL,
     masque_1 VARCHAR(15) NOT NULL,

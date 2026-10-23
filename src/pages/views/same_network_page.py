@@ -1,11 +1,15 @@
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget
-
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton, QVBoxLayout, QWidget
+from ...services.database import Database
 from ...services.logic import areIpsInSameNetwork, getNetworkAddress, isIp, isSubnetMask, parseMask
 
 class SameNetworkPage(QWidget):
-    def __init__(self):
+    def __init__(self, user_info=None):
+
         super().__init__()
+        self.db = Database()
+        self.user_info = user_info
+        self.idSelection = None
 
         # --- Structure principale ---
         layout = QVBoxLayout(self)
@@ -84,12 +88,34 @@ class SameNetworkPage(QWidget):
         result_layout.addWidget(self.status_badge, 0, Qt.AlignLeft)
         result_layout.addWidget(self.result)
 
+        self.data_history = QListWidget()
+        self.data_history.setObjectName("cidrTable")
+        self.data_history.itemClicked.connect(self.selectionner_ip)
+
         card_layout.addLayout(row)
         card_layout.addWidget(self.empty_state)
         card_layout.addWidget(self.result_card)
         card_layout.addStretch(1)
+        card_layout.addWidget(self.data_history)
 
         layout.addWidget(card)
+        self.charger_liste()
+
+    def charger_liste(self):
+        self.data_history.clear()
+        for id_ip, ip1, masque1, ip2, masque2, username in self.db.getIps(5):
+            label = ip1 + " / " + masque1 + "   |   " + ip2 + " / " + masque2 + "  (" + username + ")"
+            item = QListWidgetItem(label)
+            item.setData(Qt.UserRole, (id_ip, ip1, masque1, ip2, masque2))
+            self.data_history.addItem(item)
+
+    def selectionner_ip(self):
+        id_ip, ip1, masque1, ip2, masque2 = self.data_history.currentItem().data(Qt.UserRole)
+        self.idSelection = id_ip
+        self.ip1_input.setText(ip1)
+        self.mask1_input.setText(masque1)
+        self.ip2_input.setText(ip2)
+        self.mask2_input.setText(masque2)
 
 
     def run_check(self):
@@ -130,7 +156,7 @@ class SameNetworkPage(QWidget):
             self.status_badge.style().unpolish(self.status_badge)
             self.status_badge.style().polish(self.status_badge)
             return
-
+        
         same_network = areIpsInSameNetwork(ip1, normalized_mask1, ip2, normalized_mask2)
         direction_1 = getNetworkAddress(ip1, normalized_mask1) == getNetworkAddress(ip2, normalized_mask1)
         direction_2 = getNetworkAddress(ip2, normalized_mask2) == getNetworkAddress(ip1, normalized_mask2)
@@ -164,3 +190,16 @@ class SameNetworkPage(QWidget):
 
         self.status_badge.style().unpolish(self.status_badge)
         self.status_badge.style().polish(self.status_badge)
+
+        if self.idSelection is not None:
+            self.db.updateIp(self.idSelection, ip1, self.user_info["id"], self.user_info["username"], 5,masque=mask1, ip2=ip2, masque2=mask2)
+        else:
+            self.db.addIp(self.user_info["id"], self.user_info["username"], ip1, 5,masque=mask1, ip2=ip2, masque2=mask2)
+
+        self.ip1_input.clear()
+        self.mask1_input.clear()
+        self.ip2_input.clear()
+        self.mask2_input.clear()            
+        self.charger_liste()
+        self.idSelection = None
+        

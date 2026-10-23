@@ -1,5 +1,5 @@
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QFrame, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QPushButton, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QListWidget, QPushButton, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 
 from ...services.logic import isIp, parseMask, isSubnetMask, maskToCidr, getSubnetBits, getSubnetStep, divideSubnetwork
 

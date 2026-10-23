@@ -1,13 +1,17 @@
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton, QVBoxLayout, QWidget
+from ...services.database import Database
 
 from ...services.logic import ClassMask, getIPClass, getIPClassMask, getNetworkAddress, getSubnet, isClassFull, isIp, isSubnetMask, parseMask
 
 
 
 class GetSubnetPage(QWidget):
-    def __init__(self):
+    def __init__(self, user_info):
         super().__init__()
+        self.db = Database()
+        self.user_info = user_info
+        self.idSelection = None
 
         # --- Structure principale ---
         layout = QVBoxLayout(self)
@@ -73,13 +77,33 @@ class GetSubnetPage(QWidget):
 
         result_layout.addWidget(self.status_badge, 0, Qt.AlignLeft)
         result_layout.addWidget(self.result)
+        
+        self.data_history = QListWidget()
+        self.data_history.setObjectName("cidrTable") 
+        self.data_history.itemClicked.connect(self.selectionner_ip)
 
         card_layout.addLayout(row)
         card_layout.addWidget(self.empty_state)
         card_layout.addWidget(self.result_card)
         card_layout.addStretch(1)
+        card_layout.addWidget(self.data_history)
 
         layout.addWidget(card)
+        self.charger_liste()
+
+    def charger_liste(self):
+        self.data_history.clear()
+        for id_ip, ip, masque, username in self.db.getIps(4):
+            label = ip + "  /  " + masque + "  (" + username + ")"
+            item = QListWidgetItem(label)
+            item.setData(Qt.UserRole, (id_ip, ip, masque))
+            self.data_history.addItem(item)
+
+    def selectionner_ip(self):
+        id_ip, ip, masque = self.data_history.currentItem().data(Qt.UserRole)
+        self.idSelection = id_ip
+        self.ip_input.setText(ip)
+        self.mask_input.setText(masque) 
 
 
     def run_check(self):
@@ -170,3 +194,13 @@ class GetSubnetPage(QWidget):
         self.status_badge.setObjectName("badgeValid")
         self.status_badge.style().unpolish(self.status_badge)
         self.status_badge.style().polish(self.status_badge)
+
+        if self.idSelection is not None:
+            self.db.updateIp(self.idSelection, ip, self.user_info["id"], self.user_info["username"], 4, masque=mask)
+        else:
+            self.db.addIp(self.user_info["id"], self.user_info["username"], ip, 4, masque=mask)
+
+        self.ip_input.clear()
+        self.mask_input.clear()
+        self.charger_liste()
+        self.idSelection = None

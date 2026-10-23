@@ -81,7 +81,7 @@ class GetIpClassMaskPage(QWidget):
         card_layout.addStretch(1)
 
         layout.addWidget(card)
-
+        self.ip_input.setEditText("")
         self.charger_liste()
 
     def charger_liste(self):
