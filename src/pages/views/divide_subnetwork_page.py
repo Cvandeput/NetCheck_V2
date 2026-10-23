@@ -1,5 +1,5 @@
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QFrame, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton, QSizePolicy, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 from ...services.database import Database
 
 from ...services.logic import isIp, parseMask, isSubnetMask, maskToCidr, getSubnetBits, getSubnetStep, divideSubnetwork
@@ -87,6 +87,7 @@ class DivideSubnetworkPage(QWidget):
             self.status_badge.setObjectName("badgeNeutral")
             self.status_badge.setAlignment(Qt.AlignCenter)
             self.status_badge.setFixedWidth(140)
+            self.status_badge.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed) # --- garde sa hauteur quand le message est cache ---
 
             self.result = QLabel("")
             self.result.setObjectName("statusMessage")
@@ -95,9 +96,12 @@ class DivideSubnetworkPage(QWidget):
             result_layout.addWidget(self.result)
 
             # --- Tableau des sous-reseaux ---
-            self.table = QTableWidget(0, 5)
-            self.table.setHorizontalHeaderLabels(["N°", "IP réseau", "IP broadcast", "1ère IP", "Dernière IP"])
+            self.table = QTableWidget(0, 8)
+            self.table.setHorizontalHeaderLabels(["N°", "IP réseau", "IP broadcast", "1ère IP", "Dernière IP", "Masque", "IP utilisables", "Pas"])
             self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+            # --- colonnes courtes : largeur ajustee au contenu, les colonnes IP prennent le reste ---
+            for col in (0, 5, 6, 7):
+                self.table.horizontalHeader().setSectionResizeMode(col, QHeaderView.ResizeToContents)
             self.table.verticalHeader().setVisible(False)
             self.table.setAlternatingRowColors(True)
             self.table.setObjectName("cidrTable") # --- reutilise le style du tableau CIDR ---
@@ -149,6 +153,7 @@ class DivideSubnetworkPage(QWidget):
         
         self.empty_state.setVisible(False)
         self.result_card.setVisible(True)
+        self.result.setVisible(True) # --- message d'erreur visible, cache seulement si le calcul est valide ---
 
         # --- on cache le tableau tant que le calcul n'est pas valide ---
         self.table.setVisible(False)
@@ -226,27 +231,20 @@ class DivideSubnetworkPage(QWidget):
         # --- etape 4 : generation des sous-reseaux avec le pas ---
         rows = divideSubnetwork(ip, normalized_mask, number_subnet, new_cidr)
 
-        # --- affichage du resume ---
-        self.result.setText(
-            "Nouveau masque : "
-            f"/{new_cidr} ({parseMask(str(new_cidr))})\n"
-            "Sous-réseaux possibles : "
-            f"{2 ** subnet_bits}\n"
-            "IP utilisables par sous-réseau : "
-            f"{hosts}\n"
-            "Pas entre deux réseaux : "
-            f"{step}"
-        )
-        self.result.setStyleSheet("color: #22c55e;")
-        self.status_badge.setText("SOUS-RÉSEAU")
+        # --- calcul valide : on garde seulement le badge, le resume passe dans le tableau ---
+        self.result.setVisible(False)
+        self.status_badge.setText("VALIDE")
         self.status_badge.setObjectName("badgeValid")
         self.status_badge.style().unpolish(self.status_badge)
         self.status_badge.style().polish(self.status_badge)
 
-        # --- affichage du tableau : N° | IP reseau | IP broadcast | 1ere IP | derniere IP ---
+        # --- affichage du tableau : N° | IP reseau | IP broadcast | 1ere IP | derniere IP | masque | IP utilisables | pas ---
+        new_mask = f"/{new_cidr} ({parseMask(str(new_cidr))})"
         self.table.setRowCount(len(rows))
 
         for row_idx, row_values in enumerate(rows):
+            row_values[0] = f"{row_values[0]} / {2 ** subnet_bits}" # --- N° / sous-reseaux possibles ---
+            row_values += [new_mask, str(hosts), str(step)]
             for col_idx, cell_value in enumerate(row_values):
                 self.table.setItem(row_idx, col_idx, QTableWidgetItem(cell_value))
 
@@ -258,5 +256,10 @@ class DivideSubnetworkPage(QWidget):
         else:
             self.db.addIp(self.user_info["id"], self.user_info["username"], ip, 6, masque=mask, number_ip=number_ip, number_subnet=number_subnet)
 
+
+        self.ip_input.clear()
+        self.mask_input.clear()
+        self.number_ip_input.clear()
+        self.number_subnet_input.clear()
         self.charger_liste()
         self.idSelection = None

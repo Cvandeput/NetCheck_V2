@@ -1,7 +1,7 @@
 import os
 
 from PySide6.QtCore import Qt, Signal, QSize
-from PySide6.QtGui import QIcon, QPixmap
+from PySide6.QtGui import QGuiApplication, QIcon, QPixmap
 from PySide6.QtWidgets import QButtonGroup, QFrame, QHBoxLayout, QLabel, QPushButton, QStackedWidget, QVBoxLayout, QWidget
 
 from ..services.database import Database
@@ -29,7 +29,10 @@ class DashboardWindow(QWidget):
         role = session_user["role"] if session_user else "RÔLE INCONNU"
         self.setObjectName("dashboardWindow")
         self.setWindowTitle("NetCheck - Tableau de bord")
-        self.setFixedSize(1150, 650)
+        # --- taille prevue pour un ecran 2560x1600, reduite si l'ecran disponible est plus petit ---
+        screen = QGuiApplication.primaryScreen().availableGeometry()
+        self.setFixedSize(min(1600, int(screen.width() * 0.95)), min(950, int(screen.height() * 0.9)))
+        self.move(screen.center() - self.rect().center()) # --- fenetre centree ---
         self.setWindowFlags(
             Qt.Window |
             Qt.CustomizeWindowHint |
