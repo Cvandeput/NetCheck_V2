@@ -30,6 +30,7 @@ class Database:
         self.lockout_minutes = 5 #temps de blocage par defaut en minute
 
         self.password_min_length = 13
+        self.password_max_length = 20
 
     def _connection(self):
         if self.conn is not None:
@@ -343,18 +344,23 @@ class Database:
 
 
     def _isPasswordStrong(self, password):
-        if not password or len(password) < self.password_min_length:
+        # longueur entre 13 et 20 caracteres
+        if not password or not (self.password_min_length <= len(password) <= self.password_max_length):
             return False
 
-        if not re.search(r"[A-Z]", password):
+        # minimum 2 majuscules
+        if len(re.findall(r"[A-Z]", password)) < 2:
             return False
 
-        if not re.search(r"[a-z]", password):
+        # minimum 2 minuscules
+        if len(re.findall(r"[a-z]", password)) < 2:
             return False
 
+        # minimum 1 chiffre
         if not re.search(r"\d", password):
             return False
 
+        # minimum 1 caractere special
         if not re.search(r"[^A-Za-z0-9]", password):
             return False
 

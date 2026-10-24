@@ -138,6 +138,7 @@ class LoginWindow(QWidget):
 		self.new_password = QLineEdit()
 		self.new_password.setPlaceholderText("Nouveau mot de passe")
 		self.new_password.setEchoMode(QLineEdit.Password)
+		self.new_password.setMaxLength(20)
 		self.new_password.setFixedSize(300, 40)
 
 		confirm_label = QLabel("Confirmation")
@@ -145,6 +146,7 @@ class LoginWindow(QWidget):
 		self.confirm_password = QLineEdit()
 		self.confirm_password.setPlaceholderText("Confirmer le mot de passe")
 		self.confirm_password.setEchoMode(QLineEdit.Password)
+		self.confirm_password.setMaxLength(20)
 		self.confirm_password.setFixedSize(300, 40)
 
 		reset_button = QPushButton("Enregistrer le mot de passe")
@@ -271,7 +273,7 @@ class LoginWindow(QWidget):
 
 		if db.last_error == "PASSWORD_WEAK":
 			self.message.setText(
-				"Mot de passe trop simple. 13 caractères minimum avec majuscule, minuscule, chiffre et caractère spécial."
+				"Mot de passe invalide. 13 à 20 caractères avec 2 majuscules, 2 minuscules, 1 chiffre et 1 caractère spécial."
 			)
 			self.message.setStyleSheet("color: #FF5252;")
 			return
