@@ -1,7 +1,8 @@
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QHeaderView, QLineEdit, QPushButton, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 from ...services.database import Database
 from ...services.logic import areIpsInSameNetwork, getNetworkAddress, isIp, isSubnetMask, parseMask
+from ...services.utils import remove_spaces
 
 class SameNetworkPage(QWidget):
     def __init__(self, user_info=None):
@@ -88,9 +89,17 @@ class SameNetworkPage(QWidget):
         result_layout.addWidget(self.status_badge, 0, Qt.AlignLeft)
         result_layout.addWidget(self.result)
 
-        self.data_history = QListWidget()
-        self.data_history.setObjectName("history")
-        self.data_history.itemClicked.connect(self.selectionner_ip)
+        # --- Historique des comparaisons ---
+        self.data_history = QTableWidget(0, 5)
+        self.data_history.setHorizontalHeaderLabels(["IP 1", "Masque 1", "IP 2", "Masque 2", "Utilisateur"])
+        self.data_history.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.data_history.verticalHeader().setVisible(False)
+        self.data_history.setAlternatingRowColors(True)
+        self.data_history.setObjectName("cidrTable") # --- reutilise le style du tableau CIDR ---
+        self.data_history.setSelectionBehavior(QTableWidget.SelectRows)
+        self.data_history.setSelectionMode(QTableWidget.SingleSelection)
+        self.data_history.setEditTriggers(QTableWidget.NoEditTriggers)
+        self.data_history.cellClicked.connect(self.selectionner_ip)
 
         card_layout.addLayout(row)
         card_layout.addWidget(self.empty_state)
@@ -102,15 +111,17 @@ class SameNetworkPage(QWidget):
         self.charger_liste()
 
     def charger_liste(self):
-        self.data_history.clear()
-        for id_ip, ip1, masque1, ip2, masque2, username in self.db.getIps(5):
-            label = ip1 + " / " + masque1 + "   |   " + ip2 + " / " + masque2 + "  (" + username + ")"
-            item = QListWidgetItem(label)
-            item.setData(Qt.UserRole, (id_ip, ip1, masque1, ip2, masque2))
-            self.data_history.addItem(item)
+        rows = self.db.getIps(5)
+        self.data_history.setRowCount(len(rows))
 
-    def selectionner_ip(self):
-        id_ip, ip1, masque1, ip2, masque2 = self.data_history.currentItem().data(Qt.UserRole)
+        for row_idx, (id_ip, ip1, masque1, ip2, masque2, username) in enumerate(rows):
+            for col_idx, cell_value in enumerate((ip1, masque1, ip2, masque2, username)):
+                self.data_history.setItem(row_idx, col_idx, QTableWidgetItem(cell_value))
+            # --- donnees de la ligne stockees sur la 1ere cellule ---
+            self.data_history.item(row_idx, 0).setData(Qt.UserRole, (id_ip, ip1, masque1, ip2, masque2))
+
+    def selectionner_ip(self, row, column):
+        id_ip, ip1, masque1, ip2, masque2 = self.data_history.item(row, 0).data(Qt.UserRole)
         self.idSelection = id_ip
         self.ip1_input.setText(ip1)
         self.mask1_input.setText(masque1)
@@ -120,10 +131,10 @@ class SameNetworkPage(QWidget):
 
     def run_check(self):
         # --- Execution de la comparaison ---
-        ip1 = self.ip1_input.text().strip()
-        mask1 = self.mask1_input.text().strip()
-        ip2 = self.ip2_input.text().strip()
-        mask2 = self.mask2_input.text().strip()
+        ip1 = remove_spaces(self.ip1_input.text())
+        mask1 = remove_spaces(self.mask1_input.text())
+        ip2 = remove_spaces(self.ip2_input.text())
+        mask2 = remove_spaces(self.mask2_input.text())
         normalized_mask1 = parseMask(mask1)
         normalized_mask2 = parseMask(mask2)
 

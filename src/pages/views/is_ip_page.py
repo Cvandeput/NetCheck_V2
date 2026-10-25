@@ -3,6 +3,7 @@ from PySide6.QtWidgets import QComboBox, QFrame, QHBoxLayout, QLabel, QPushButto
 
 from ...services.database import Database
 from ...services.logic import isIp
+from ...services.utils import remove_spaces
 
 
 
@@ -107,7 +108,7 @@ class IsIpPage(QWidget):
 
     def run_check(self):
         # --- Execution de la verification ---
-        ip = self.ip_input.currentText().strip()
+        ip = remove_spaces(self.ip_input.currentText())
         valid = isIp(ip)
 
         self.empty_state.setVisible(False)

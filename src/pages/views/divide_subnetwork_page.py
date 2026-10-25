@@ -1,8 +1,9 @@
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QFrame, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPushButton, QSizePolicy, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QPushButton, QSizePolicy, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 from ...services.database import Database
 
 from ...services.logic import isIp, parseMask, isSubnetMask, maskToCidr, getSubnetBits, getSubnetStep, divideSubnetwork
+from ...services.utils import remove_spaces
 
 class DivideSubnetworkPage(QWidget):
     def __init__(self, user_info):
@@ -110,10 +111,17 @@ class DivideSubnetworkPage(QWidget):
             self.table.setVisible(False)
 
             # --- Historique des calculs ---
-            self.data_history = QListWidget()
-            self.data_history.setObjectName("history")
+            self.data_history = QTableWidget(0, 5)
+            self.data_history.setHorizontalHeaderLabels(["IP", "Masque", "Sous-réseaux", "IP / sous-réseau", "Utilisateur"])
+            self.data_history.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+            self.data_history.verticalHeader().setVisible(False)
+            self.data_history.setAlternatingRowColors(True)
+            self.data_history.setObjectName("cidrTable") # --- reutilise le style du tableau CIDR ---
+            self.data_history.setSelectionBehavior(QTableWidget.SelectRows)
+            self.data_history.setSelectionMode(QTableWidget.SingleSelection)
+            self.data_history.setEditTriggers(QTableWidget.NoEditTriggers)
             self.data_history.setMaximumHeight(180) # --- laisse la place au tableau ---
-            self.data_history.itemClicked.connect(self.selectionner_ip)
+            self.data_history.cellClicked.connect(self.selectionner_ip)
 
             card_layout.addLayout(row)
             card_layout.addWidget(self.empty_state)
@@ -126,15 +134,17 @@ class DivideSubnetworkPage(QWidget):
             self.charger_liste()
 
     def charger_liste(self):
-        self.data_history.clear()
-        for id_ip, ip, masque, number_ip, number_subnet, username in self.db.getIps(6):
-            label = ip + "  /  " + masque + "  —  " + str(number_subnet) + " sous-réseaux, " + str(number_ip) + " IP  (" + username + ")"
-            item = QListWidgetItem(label)
-            item.setData(Qt.UserRole, (id_ip, ip, masque, number_ip, number_subnet))
-            self.data_history.addItem(item)
+        rows = self.db.getIps(6)
+        self.data_history.setRowCount(len(rows))
 
-    def selectionner_ip(self):
-        id_ip, ip, masque, number_ip, number_subnet = self.data_history.currentItem().data(Qt.UserRole)
+        for row_idx, (id_ip, ip, masque, number_ip, number_subnet, username) in enumerate(rows):
+            for col_idx, cell_value in enumerate((ip, masque, str(number_subnet), str(number_ip), username)):
+                self.data_history.setItem(row_idx, col_idx, QTableWidgetItem(cell_value))
+            # --- donnees de la ligne stockees sur la 1ere cellule ---
+            self.data_history.item(row_idx, 0).setData(Qt.UserRole, (id_ip, ip, masque, number_ip, number_subnet))
+
+    def selectionner_ip(self, row, column):
+        id_ip, ip, masque, number_ip, number_subnet = self.data_history.item(row, 0).data(Qt.UserRole)
         self.idSelection = id_ip
         self.ip_input.setText(ip)
         self.mask_input.setText(masque)
@@ -144,12 +154,12 @@ class DivideSubnetworkPage(QWidget):
     def run_check(self):
         
         # --- Execution du calcul de sous-reseau ---
-        ip = self.ip_input.text().strip()
-        mask = self.mask_input.text().strip()
+        ip = remove_spaces(self.ip_input.text())
+        mask = remove_spaces(self.mask_input.text())
         normalized_mask = parseMask(mask)
         
-        number_ip = self.number_ip_input.text().strip()
-        number_subnet = self.number_subnet_input.text().strip()
+        number_ip = remove_spaces(self.number_ip_input.text())
+        number_subnet = remove_spaces(self.number_subnet_input.text())
         
         self.empty_state.setVisible(False)
         self.result_card.setVisible(True)

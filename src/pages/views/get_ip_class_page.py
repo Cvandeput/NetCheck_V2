@@ -4,6 +4,7 @@ from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButto
 from ...services.database import Database
 
 from ...services.logic import ClassMask, getIPClass, isPrivateIp, isReservedIp
+from ...services.utils import remove_spaces
 
 
 
@@ -98,7 +99,7 @@ class GetIpClassPage(QWidget):
 
     def run_check(self):
         # --- Execution du calcul de classe ---
-        ip = self.ip_input.currentText().strip()
+        ip = remove_spaces(self.ip_input.currentText())
         ip_class = getIPClass(ip)
 
         self.empty_state.setVisible(False)

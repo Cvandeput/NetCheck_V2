@@ -4,6 +4,7 @@ from PySide6.QtWidgets import QComboBox, QFrame, QHBoxLayout, QLabel, QLineEdit,
 from ...services.database import Database
 
 from ...services.logic import ClassMask, getIPClass, getIPClassMask
+from ...services.utils import remove_spaces
 
 
 
@@ -98,7 +99,7 @@ class GetIpClassMaskPage(QWidget):
 
     def run_check(self):
         # --- Execution du calcul de masque ---
-        ip = self.ip_input.currentText().strip()
+        ip = remove_spaces(self.ip_input.currentText())
         ip_class = getIPClass(ip)
         mask = getIPClassMask(ip)
 

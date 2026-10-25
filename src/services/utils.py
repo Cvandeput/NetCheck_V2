@@ -29,3 +29,10 @@ def bin_to_int(text: str) -> int | None:
             value += 2 ** i
             
     return value
+
+
+def remove_spaces(text: str) -> str:
+    if type(text) is not str:
+        return ""
+
+    return "".join(text.split())
