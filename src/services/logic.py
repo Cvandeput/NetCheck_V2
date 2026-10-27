@@ -1,5 +1,5 @@
 from enum import Enum
-from .utils import bin_to_int, int_to_bin
+from .utils import bin_to_int, int_to_bin, is_number
 
 class ClassMask(Enum):
     CLASS_A = "255.0.0.0"
@@ -19,7 +19,7 @@ def isIp(ip: str) -> bool:
         return False
 
     for part in parts:
-        if not part.isdigit():
+        if not is_number(part):
             return False
 
         value = int(part)
@@ -37,7 +37,7 @@ def parseMask(mask: str) -> str | None:
     if cleaned.startswith("/"):
         cleaned = cleaned[1:]
 
-    if cleaned.isdigit():
+    if is_number(cleaned):
         cidr = int(cleaned)
         if cidr is None or cidr < 0 or cidr > 32:
             return None

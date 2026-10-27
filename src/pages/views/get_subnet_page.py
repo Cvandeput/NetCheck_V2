@@ -2,7 +2,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QHeaderView, QLineEdit, QPushButton, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 from ...services.database import Database
 
-from ...services.logic import ClassMask, getIPClass, getIPClassMask, getNetworkAddress, getSubnet, isClassFull, isIp, isSubnetMask, parseMask
+from ...services.logic import ClassMask, getIPClass, getIPClassMask, getNetworkAddress, getSubnet, isIp, isSubnetMask, maskToCidr, parseMask
 from ...services.utils import remove_spaces
 
 
@@ -35,7 +35,9 @@ class GetSubnetPage(QWidget):
         self.ip_input.setFixedHeight(46)
 
         self.mask_input = QLineEdit()
-        self.mask_input.setPlaceholderText("Masque classful")
+        # --- masque accepte en decimal pointe (255.255.255.0) ou en CIDR (/24), classful ou classless ---
+        self.mask_input.setPlaceholderText("Masque : 255.255.255.0 ou /24")
+        self.mask_input.setToolTip("Masque (/8, /16, /24) ou (255.255.255.128...)")
         self.mask_input.setObjectName("primaryInput")
         self.mask_input.setFixedHeight(46)
         self.mask_input.returnPressed.connect(self.run_check)
@@ -144,15 +146,6 @@ class GetSubnetPage(QWidget):
             self.status_badge.style().polish(self.status_badge)
             return
 
-        if not isClassFull(normalized_mask):
-            self.result.setText("Ce calcul n'accepte que des masques classful")
-            self.result.setStyleSheet("color: #f59e0b;")
-            self.status_badge.setText("NON CLASSFUL")
-            self.status_badge.setObjectName("badgeWarn")
-            self.status_badge.style().unpolish(self.status_badge)
-            self.status_badge.style().polish(self.status_badge)
-            return
-
         ip_class = getIPClass(ip)
         expected_mask = getIPClassMask(ip)
 
@@ -167,6 +160,19 @@ class GetSubnetPage(QWidget):
 
         if expected_mask == ClassMask.ERROR.value:
             self.result.setText("Adresse IP invalide")
+            self.result.setStyleSheet("color: #ef4444;")
+            self.status_badge.setText("ERREUR")
+            self.status_badge.setObjectName("badgeInvalid")
+            self.status_badge.style().unpolish(self.status_badge)
+            self.status_badge.style().polish(self.status_badge)
+            return
+
+        # --- un masque plus court que celui de la classe donnerait un sous-reseau plus grand que le reseau de classe ---
+        if maskToCidr(normalized_mask) < maskToCidr(expected_mask):
+            self.result.setText(
+                f"Masque trop court : minimum /{maskToCidr(expected_mask)} ({expected_mask}) "
+                f"pour une {ip_class.name.replace('CLASS_', 'Classe ')}"
+            )
             self.result.setStyleSheet("color: #ef4444;")
             self.status_badge.setText("ERREUR")
             self.status_badge.setObjectName("badgeInvalid")
@@ -194,7 +200,11 @@ class GetSubnetPage(QWidget):
             self.status_badge.style().polish(self.status_badge)
             return
 
+        # --- type de masque affiche : classful = masque de la classe de l'IP, classless = masque plus long ---
+        mask_type = "classful" if normalized_mask == expected_mask else "classless"
+
         self.result.setText(
+            f"Masque : {normalized_mask} (/{maskToCidr(normalized_mask)}) - {mask_type}\n"
             "Réseau de classe (Majeur) : "
             f"{class_network}\n"
             "Sous-réseau personnalisé : "

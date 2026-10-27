@@ -3,7 +3,11 @@ from PySide6.QtWidgets import QFrame, QHBoxLayout, QHeaderView, QLabel, QLineEdi
 from ...services.database import Database
 
 from ...services.logic import isIp, parseMask, isSubnetMask, maskToCidr, getSubnetBits, getSubnetStep, divideSubnetwork
-from ...services.utils import remove_spaces
+from ...services.utils import is_number, remove_spaces
+
+# --- limites du nombre de sous-reseaux : au-dela de MAX le remplissage du tableau fige l'interface ---
+MIN_SUBNETS = 4
+MAX_SUBNETS = 512
 
 class DivideSubnetworkPage(QWidget):
     def __init__(self, user_info):
@@ -35,7 +39,8 @@ class DivideSubnetworkPage(QWidget):
     
             # --- input masque reseau ---
             self.mask_input = QLineEdit()
-            self.mask_input.setPlaceholderText("Masque du réseau")
+            self.mask_input.setPlaceholderText("Masque : 255.255.255.0 ou /24")
+            self.mask_input.setToolTip("Masque (/8, /16, /24) ou (255.255.255.128...)")
             self.mask_input.setObjectName("primaryInput")
             self.mask_input.setFixedHeight(46)
             self.mask_input.returnPressed.connect(self.run_check)
@@ -188,7 +193,7 @@ class DivideSubnetworkPage(QWidget):
             return
         
         # --- etape 1 : verification du nombre d'IP et du nombre de sous-reseaux (entier > 0) ---
-        if not number_ip.isdigit() or int(number_ip) == 0:
+        if not is_number(number_ip) or int(number_ip) == 0:
             self.result.setText("Nombre d'IP invalide")
             self.result.setStyleSheet("color: #ef4444;")
             self.status_badge.setText("ERREUR")
@@ -197,8 +202,17 @@ class DivideSubnetworkPage(QWidget):
             self.status_badge.style().polish(self.status_badge)
             return
 
-        if not number_subnet.isdigit() or int(number_subnet) == 0:
+        if not is_number(number_subnet) or int(number_subnet) == 0:
             self.result.setText("Nombre de sous-réseaux invalide")
+            self.result.setStyleSheet("color: #ef4444;")
+            self.status_badge.setText("ERREUR")
+            self.status_badge.setObjectName("badgeInvalid")
+            self.status_badge.style().unpolish(self.status_badge)
+            self.status_badge.style().polish(self.status_badge)
+            return
+
+        if not MIN_SUBNETS <= int(number_subnet) <= MAX_SUBNETS:
+            self.result.setText(f"Nombre de sous-réseaux entre {MIN_SUBNETS} et {MAX_SUBNETS}")
             self.result.setStyleSheet("color: #ef4444;")
             self.status_badge.setText("ERREUR")
             self.status_badge.setObjectName("badgeInvalid")

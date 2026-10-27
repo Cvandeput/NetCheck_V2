@@ -31,6 +31,14 @@ def bin_to_int(text: str) -> int | None:
     return value
 
 
+# --- chiffres 0-9 uniquement : str.isdigit() accepte aussi "²", "³", "١"... que int() refuse ou convertit ---
+def is_number(text: str) -> bool:
+    if type(text) is not str:
+        return False
+
+    return text.isascii() and text.isdigit()
+
+
 def remove_spaces(text: str) -> str:
     if type(text) is not str:
         return ""
