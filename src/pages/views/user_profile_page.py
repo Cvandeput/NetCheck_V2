@@ -374,7 +374,15 @@ class UserProfilePage(QWidget):
             self.refresh_users()
             return
 
-        self.set_add_message("Échec de l'ajout (nom déjà pris).", True)
+        if self.db.last_error == "USERNAME_TOO_LONG":
+            self.set_add_message(f"Nom d'utilisateur trop long ({self.db.username_max_length} caractères max).", True)
+            return
+
+        if self.db.last_error == "USERNAME_TAKEN":
+            self.set_add_message("Nom d'utilisateur déjà pris.", True)
+            return
+
+        self.set_add_message("Échec de l'ajout.", True)
 
     def update_user(self):
         username = self.edit_username_input.text().strip()
@@ -391,7 +399,12 @@ class UserProfilePage(QWidget):
 
         if username != self.selected_username:
             if not self.db.updateUsername(self.selected_username, username):
-                message = "Nom d'utilisateur déjà pris." if self.db.last_error == "USERNAME_TAKEN" else "Échec de la modification."
+                if self.db.last_error == "USERNAME_TOO_LONG":
+                    message = f"Nom d'utilisateur trop long ({self.db.username_max_length} caractères max)."
+                elif self.db.last_error == "USERNAME_TAKEN":
+                    message = "Nom d'utilisateur déjà pris."
+                else:
+                    message = "Échec de la modification."
                 self.set_edit_message(message, True)
                 return
 

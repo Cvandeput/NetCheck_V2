@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 import bcrypt
 import psycopg2
 from psycopg2 import Error
+from psycopg2.errors import UniqueViolation
 from dotenv import load_dotenv
 
 
@@ -31,6 +32,13 @@ class Database:
 
         self.password_min_length = 13
         self.password_max_length = 20
+
+        self.username_max_length = 50 # taille de la colonne users.username VARCHAR(50)
+
+        # message unique pour tout echec de connexion : ne revele pas si le compte existe, est inactif ou bloque
+        self.login_failed_message = "Identifiants incorrects ou compte indisponible"
+        # hash factice (rounds=13 comme les vrais) : un username inconnu prend le meme temps qu'un connu
+        self._dummy_hash = "$2b$13$/3ZAE7iRgX.7YmHdugdLz.x06BdJOn.cCHtzngUpLN3qxZgTa6t5S"
 
     def _connection(self):
         if self.conn is not None:
@@ -91,6 +99,10 @@ class Database:
             return False
 
         try:
+            if len(username) > self.username_max_length:
+                self.last_error = "USERNAME_TOO_LONG"
+                return False
+
             if not is_temporary and not self._isPasswordStrong(password):
                 self.last_error = "PASSWORD_WEAK"
                 return False
@@ -107,7 +119,11 @@ class Database:
             )
             self._connection().commit()
             return True
-        
+
+        except UniqueViolation:
+            self.last_error = "USERNAME_TAKEN"
+            self._connection().rollback()
+            return False
         except Error:
             self.last_error = "Operation SQL impossible"
             self._connection().rollback()
@@ -141,6 +157,10 @@ class Database:
             return False
 
         try:
+            if len(newUsername) > self.username_max_length:
+                self.last_error = "USERNAME_TOO_LONG"
+                return False
+
             cursor.execute(
                 "UPDATE users SET username = %s WHERE username = %s",
                 (newUsername, username)
@@ -149,8 +169,12 @@ class Database:
             self._connection().commit()
             return affected > 0
 
-        except Error:
+        except UniqueViolation:
             self.last_error = "USERNAME_TAKEN"
+            self._connection().rollback()
+            return False
+        except Error:
+            self.last_error = "Operation SQL impossible"
             self._connection().rollback()
             return False
         finally:
@@ -304,20 +328,20 @@ class Database:
             # nombre de blocages déjà subis par CET utilisateur (stocké en base, colonne 10 du SELECT)
             lockout_count = record[9] if record[9] is not None else 0
 
-            if not is_active:
-                self.last_error = "COMPTE INACTIVE"
-                return False
+            password_ok = bcrypt.checkpw(password.encode('utf-8'), hash_stocke.encode('utf-8'))
 
+            # inactif ou bloque : meme message qu'un mauvais mot de passe, meme si le mot de passe est bon
+            # (sinon le message confirmerait le mot de passe et le brute force continuerait pendant le blocage)
             now = datetime.now()
-            if locked_until and locked_until > now:
-                self.last_error = "COMPTE BLOQUE"
+            if not is_active or (locked_until and locked_until > now):
+                self.last_error = self.login_failed_message
                 return False
 
             # Blocage expiré : on redonne un nouveau cycle de tentatives
             if locked_until and locked_until <= now:
                 failed_attempts = 0
 
-            if bcrypt.checkpw(password.encode('utf-8'), hash_stocke.encode('utf-8')):
+            if password_ok:
                 if is_temporary:
                     self.last_error = "PASSWORD_RESET_REQUIRED"
                     self.password_reset_required = True
@@ -334,9 +358,11 @@ class Database:
 
             # on transmet aussi lockout_count pour calculer la durée du prochain blocage
             self._registerFailedAttempt(username, failed_attempts, lockout_count)
-            self.last_error = "Identifiants incorrects"
+            self.last_error = self.login_failed_message
         else:
-            self.last_error = "Identifiants incorrects"
+            # compte inexistant : bcrypt quand meme pour ne pas repondre plus vite
+            bcrypt.checkpw(password.encode('utf-8'), self._dummy_hash.encode('utf-8'))
+            self.last_error = self.login_failed_message
 
         return False
 

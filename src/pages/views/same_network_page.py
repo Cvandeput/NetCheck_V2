@@ -33,7 +33,8 @@ class SameNetworkPage(QWidget):
         self.ip1_input.setFixedHeight(46)
 
         self.mask1_input = QLineEdit()
-        self.mask1_input.setPlaceholderText("Masque 1")
+        self.mask1_input.setPlaceholderText("Masque 1 : 255.255.255.0 ou /24")
+        self.mask1_input.setToolTip("Masque (/8, /16, /24) ou (255.255.255.128...)")
         self.mask1_input.setObjectName("primaryInput")
         self.mask1_input.setFixedHeight(46)
 
@@ -43,7 +44,8 @@ class SameNetworkPage(QWidget):
         self.ip2_input.setFixedHeight(46)
     
         self.mask2_input = QLineEdit()
-        self.mask2_input.setPlaceholderText("Masque 2")
+        self.mask2_input.setPlaceholderText("Masque 2 : 255.255.255.0 ou /24")
+        self.mask2_input.setToolTip("Masque (/8, /16, /24) ou (255.255.255.128...)")
         self.mask2_input.setObjectName("primaryInput")
         self.mask2_input.setFixedHeight(46)
         self.mask2_input.returnPressed.connect(self.run_check)
@@ -178,13 +180,14 @@ class SameNetworkPage(QWidget):
             self.status_badge.setText("OUI")
             self.status_badge.setObjectName("badgeValid")
         elif direction_1 or direction_2:
+            # --- direction_1 : masque 1 -> IP2 est-elle dans le reseau d'IP1 ? / direction_2 : masque 2 -> IP1 dans le reseau d'IP2 ? ---
             details = []
-            if direction_1:
+            if direction_2:
                 details.append("IP1 dans réseau IP2: OUI")
             else:
                 details.append("IP1 dans réseau IP2: NON")
 
-            if direction_2:
+            if direction_1:
                 details.append("IP2 dans réseau IP1: OUI")
             else:
                 details.append("IP2 dans réseau IP1: NON")
